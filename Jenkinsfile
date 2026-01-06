@@ -58,15 +58,15 @@ pipeline {
                 }
             }
         }
-        // stage('Quality Gate') {
-        //     steps {
-        //         timeout(time: 1, unit: 'HOURS') {
-        //             // Wait for the quality gate status
-        //             // abortPipeline: true will fail the Jenkins job if the quality gate is 'FAILED'
-        //             waitForQualityGate abortPipeline: true 
-        //         }
-        //     }
-        // } */
+        / stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    // Wait for the quality gate status
+                    // abortPipeline: true will fail the Jenkins job if the quality gate is 'FAILED'
+                    waitForQualityGate abortPipeline: true 
+                }
+            }
+        } *//
         // stage('Dependabot Security Gate') {
         //     environment {
         //         GITHUB_OWNER = 'daws-86s'
