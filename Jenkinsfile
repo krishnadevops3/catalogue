@@ -16,35 +16,35 @@ pipeline {
         timeout(time: 10, unit: 'MINUTES') 
         disableConcurrentBuilds()
     }
-    // // This is build section
-    // stages {
-    //     stage('Read Version') {
-    //         steps {
-    //             script{
-    //                 def packageJSON = readJSON file: 'package.json'
-    //                 appVersion = packageJSON.version
-    //                 echo "app version: ${appVersion}"
-    //             }
-    //         }
-    //     }
-    //     stage('Install Dependencies') {
-    //         steps {
-    //             script{
-    //                 sh """
-    //                     npm install
-    //                 """
-    //             }
-    //         }
-    //     }
-    //     stage('Unit Test') {
-    //         steps {
-    //             script{
-    //                 sh """
-    //                     npm test
-    //                 """
-    //             }
-    //         }
-    //     }
+    // This is build section
+    stages {
+        stage('Read Version') {
+            steps {
+                script{
+                    def packageJSON = readJSON file: 'package.json'
+                    appVersion = packageJSON.version
+                    echo "app version: ${appVersion}"
+                }
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                script{
+                    sh """
+                        npm install
+                    """
+                }
+            }
+        }
+        stage('Unit Test') {
+            steps {
+                script{
+                    sh """
+                        npm test
+                    """
+                }
+            }
+        }
         Here you need to select scanner tool and send the analysis to server
          stage('Sonar Scan'){
             environment {
