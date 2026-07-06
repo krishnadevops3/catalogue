@@ -1,16 +1,20 @@
 pipeline {
+
     agent {
         node {
             label 'AGENT-1'
         }
     }
 
+    tools {
+        nodejs 'node20'
+    }
+
     environment {
-        COURSE = "Jenkins"
-        appVersion = ""
-        ACC_ID = "690509490317"
-        PROJECT = "roboshop"
-        COMPONENT = "catalogue"
+        COURSE      = "Jenkins"
+        ACC_ID      = "690509490317"
+        PROJECT     = "roboshop"
+        COMPONENT   = "catalogue"
     }
 
     options {
@@ -24,31 +28,47 @@ pipeline {
             steps {
                 script {
                     def packageJSON = readJSON file: 'package.json'
-                    appVersion = packageJSON.version
-                    echo "Application Version: ${appVersion}"
+                    env.appVersion = packageJSON.version
+
+                    echo "===================================="
+                    echo "Application Version : ${env.appVersion}"
+                    echo "===================================="
                 }
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                sh '''
+                    npm install
+                '''
             }
         }
 
         stage('Unit Test') {
             steps {
-                sh 'npm test'
+                sh '''
+                    npm test
+                '''
             }
         }
 
         stage('Sonar Scan') {
             steps {
                 script {
+
                     def scannerHome = tool 'sonar-8.0'
 
                     withSonarQubeEnv('sonar-server') {
-                        sh "${scannerHome}/bin/sonar-scanner"
+
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=${COMPONENT} \
+                        -Dsonar.projectName=${COMPONENT} \
+                        -Dsonar.sources=. \
+                        -Dsonar.projectVersion=${env.appVersion}
+                        """
+
                     }
                 }
             }
@@ -62,18 +82,24 @@ pipeline {
             }
         }
 
-        stage('Build Image') {
+        stage('Build Docker Image') {
             steps {
                 script {
+
                     withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+
                         sh """
-                            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com
+                        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com
 
-                            docker build -t ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com/${PROJECT}/${COMPONENT}:${appVersion} .
+                        docker build -t ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com/${PROJECT}/${COMPONENT}:${env.appVersion} .
 
-                            docker push ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com/${PROJECT}/${COMPONENT}:${appVersion}
+                        docker images
+
+                        docker push ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com/${PROJECT}/${COMPONENT}:${env.appVersion}
                         """
+
                     }
+
                 }
             }
         }
@@ -82,13 +108,13 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 sh """
-                    trivy image \
-                    --scanners vuln \
-                    --severity HIGH,CRITICAL,MEDIUM \
-                    --pkg-types os \
-                    --exit-code 1 \
-                    --format table \
-                    ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com/${PROJECT}/${COMPONENT}:${appVersion}
+                trivy image \
+                --scanners vuln \
+                --severity HIGH,CRITICAL,MEDIUM \
+                --pkg-types os \
+                --exit-code 1 \
+                --format table \
+                ${ACC_ID}.dkr.ecr.us-east-1.amazonaws.com/${PROJECT}/${COMPONENT}:${env.appVersion}
                 """
             }
         }
@@ -97,21 +123,22 @@ pipeline {
     }
 
     post {
+
         always {
-            echo 'Pipeline execution completed.'
+            echo "Cleaning Workspace..."
             cleanWs()
         }
 
         success {
-            echo 'Pipeline executed successfully.'
+            echo "Pipeline Executed Successfully."
         }
 
         failure {
-            echo 'Pipeline execution failed.'
+            echo "Pipeline Execution Failed."
         }
 
         aborted {
-            echo 'Pipeline was aborted.'
+            echo "Pipeline Aborted."
         }
     }
 }
