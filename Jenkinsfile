@@ -7,8 +7,8 @@ pipeline {
     }
 
     tools {
-        nodejs 'node20'
-    }
+    nodejs 'NodeJS 20'
+}
 
     environment {
         COURSE      = "Jenkins"
