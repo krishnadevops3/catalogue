@@ -57,7 +57,7 @@ pipeline {
             steps {
                 script {
 
-                    def scannerHome = tool 'sonar-8.0'
+                    def scannerHome = tool 'sonar-scanner'
 
                     withSonarQubeEnv('sonar-scanner') {
 
