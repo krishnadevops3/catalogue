@@ -6,6 +6,10 @@ pipeline {
         }
     }
 
+      triggers {
+    cron('* * * * *')
+    }
+
     tools {
     nodejs 'NodeJS 20'
 }
